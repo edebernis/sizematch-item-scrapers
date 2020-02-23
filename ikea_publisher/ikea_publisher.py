@@ -20,9 +20,9 @@ class IKEAScraper(Scraper):
         logger.debug('Fetching categories')
 
         url = '{}/{}/cat/products-products/'.format(self.base_url, self.lang)
-        response = requests.get(url)
+        res = requests.get(url)
 
-        categories = IKEAScraper.CATEGORY_URLS_REGEX.findall(response.text)
+        categories = set(IKEAScraper.CATEGORY_URLS_REGEX.findall(res.text))
         logger.debug('Fetched {} categories'.format(len(categories)))
 
         return categories
