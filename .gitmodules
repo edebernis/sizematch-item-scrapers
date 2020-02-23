@@ -1,0 +1,3 @@
+[submodule "sizematch-urls-publisher-py"]
+	path = sizematch-urls-publisher-py
+	url = git@github.com:edebernis/sizematch-urls-publisher-py.git
