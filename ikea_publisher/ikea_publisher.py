@@ -2,11 +2,8 @@
 
 import re
 import logging
-import requests
 
 from urls_publisher import Scraper
-
-logger = logging.getLogger(__name__)
 
 
 class IKEAScraper(Scraper):
@@ -16,33 +13,49 @@ class IKEAScraper(Scraper):
     def __init__(self, config):
         super(IKEAScraper, self).__init__(config)
 
+        self.base_url = config.get('base_url')
+        self.lang = config.get('lang')
+
     def _fetch_categories(self):
-        logger.debug('Fetching categories')
+        logging.debug('Fetching categories')
 
         url = '{}/{}/cat/products-products/'.format(self.base_url, self.lang)
-        res = requests.get(url)
+        res = self.do_request(url)
+        if not res:
+            logging.error('Failed to fetch categories')
+            return None
 
         categories = set(IKEAScraper.CATEGORY_URLS_REGEX.findall(res.text))
-        logger.debug('Fetched {} categories'.format(len(categories)))
+        logging.debug('Fetched {} categories'.format(len(categories)))
 
         return categories
 
     def _fetch_products(self, category):
-        logger.debug('Fetching products of category {}'.format(category))
+        logging.debug('Fetching products of category {}'.format(category))
 
         url = '{}/{}/cat/{}/'.format(self.base_url, self.lang, category)
-        response = requests.get(url)
+        res = self.do_request(url)
+        if not res:
+            logging.error('Failed to fetch products for category {}'
+                          .format(category))
+            return None
 
-        products = IKEAScraper.PRODUCT_URLS_REGEX.findall(response.text)
-        logger.debug('Fetched {} products for category {}'
-                     .format(len(products), category))
+        products = IKEAScraper.PRODUCT_URLS_REGEX.findall(res.text)
+        logging.debug('Fetched {} products for category {}'
+                      .format(len(products), category))
 
         return products
 
     def get_urls(self):
         urls = set()
-        for category in self._fetch_categories():
+
+        categories = self._fetch_categories()
+        if not categories:
+            return None
+
+        for category in categories:
             products = self._fetch_products(category)
-            urls.update(products)
+            if products:
+                urls.update(products)
 
         return urls
