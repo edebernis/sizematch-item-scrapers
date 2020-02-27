@@ -20,7 +20,7 @@ class IKEAScraper(Scraper):
         logging.debug('Fetching categories')
 
         url = '{}/{}/cat/products-products/'.format(self.base_url, self.lang)
-        res = self.do_request(url)
+        res = self.do_request('get', url)
         if not res:
             logging.error('Failed to fetch categories')
             return None
@@ -34,7 +34,7 @@ class IKEAScraper(Scraper):
         logging.debug('Fetching products of category {}'.format(category))
 
         url = '{}/{}/cat/{}/'.format(self.base_url, self.lang, category)
-        res = self.do_request(url)
+        res = self.do_request('get', url)
         if not res:
             logging.error('Failed to fetch products for category {}'
                           .format(category))

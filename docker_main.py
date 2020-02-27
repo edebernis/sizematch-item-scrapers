@@ -16,7 +16,7 @@ def load_config():
         'publisher': {}
     }
     try:
-        new_config = open(os.environ.get('CONFIG_FILE'))
+        new_config = open(os.environ.get('CONFIG_FILE')).read()
         config.update(json.loads(new_config))
 
         config['publisher']['host'] = os.environ.get('RABBITMQ_HOST')
