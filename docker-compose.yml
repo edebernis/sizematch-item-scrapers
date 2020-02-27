@@ -1,0 +1,15 @@
+version: '3'
+services:
+  rabbitmq:
+    image: "rabbitmq:3.8-management-alpine"
+    ports:
+      - 8080:15672
+    environment:
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=password
+  app:
+    build: .
+    depends_on:
+      - rabbitmq
+    environment:
+      - CONFIG_FILE=/usr/src/app/config.json
