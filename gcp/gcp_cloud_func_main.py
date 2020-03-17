@@ -55,4 +55,7 @@ def entrypoint_pubsub(event, context):
     if not config:
         sys.exit(1)
 
+    if config.get('debug', False):
+        logging.basicConfig(level=logging.DEBUG)
+
     main(config)

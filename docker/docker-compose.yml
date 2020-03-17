@@ -8,8 +8,10 @@ services:
       - RABBITMQ_DEFAULT_USER=user
       - RABBITMQ_DEFAULT_PASS=password
   app:
-    build: .
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
     depends_on:
       - rabbitmq
     environment:
-      - CONFIG_FILE=/usr/src/app/config.json
+      - CONFIG_FILE=/usr/src/app/docker/config.json
