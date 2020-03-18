@@ -48,11 +48,13 @@ class IKEAScraper(Scraper):
         return products
 
     def get_urls(self):
+        """This method cannot be a generator as we need to remove
+           duplicates"""
         urls = set()
 
         categories = self._fetch_categories()
         if not categories:
-            return None
+            return []
 
         for category in categories:
             products = self._fetch_products(category)
