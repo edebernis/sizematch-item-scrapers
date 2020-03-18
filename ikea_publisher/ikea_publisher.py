@@ -59,6 +59,10 @@ class IKEAScraper(Scraper):
         for category in categories:
             products = self._fetch_products(category)
             if products:
-                urls.update(products)
+                products_urls = [
+                    '{}/{}/p/{}'.format(self.base_url, self.lang, product)
+                    for product in products
+                ]
+                urls.update(products_urls)
 
         return urls
