@@ -10,6 +10,10 @@
         "host": "rabbitmq",
         "port": 5672,
         "username": "user",
-        "password": "password"
+        "password": "password",
+        "exchange": "product_urls",
+        "queue": "ikea",
+        "routing_key": "product_urls.ikea",
+        "app_id": "ikea-publisher"
     }
 }
