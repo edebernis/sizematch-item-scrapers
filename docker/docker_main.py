@@ -18,11 +18,6 @@ def load_config():
     try:
         new_config = open(os.environ.get('CONFIG_FILE')).read()
         config.update(json.loads(new_config))
-
-        config['publisher']['host'] = os.environ.get('RABBITMQ_HOST')
-        config['publisher']['port'] = os.environ.get('RABBITMQ_PORT')
-        config['publisher']['username'] = os.environ.get('RABBITMQ_USER')
-        config['publisher']['password'] = os.environ.get('RABBITMQ_PASS')
     except Exception:
         logging.exception('Failed to load configuration')
         return
