@@ -2,6 +2,7 @@
     "debug": true,
 
     "scraper": {
+        "name": "ikea",
         "base_url": "https://www.ikea.com",
         "lang": "gb/en"
     },

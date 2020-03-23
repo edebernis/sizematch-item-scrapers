@@ -6,8 +6,7 @@ import sys
 import json
 import logging
 
-from urls_publisher import URLsPublisher
-from ikea_publisher import IKEAScraper
+from publisher import Publisher, Scraper
 
 
 def load_config():
@@ -26,9 +25,10 @@ def load_config():
 
 
 def main(config):
-    scraper = IKEAScraper(config.get('scraper'))
-    URLsPublisher.create(scraper, config.get('publisher')) \
-                 .run()
+    scraper = Scraper.create(config.get('scraper'))
+    publisher = Publisher.create(config.get('publisher'))
+
+    publisher.run(scraper)
 
 
 if __name__ == '__main__':

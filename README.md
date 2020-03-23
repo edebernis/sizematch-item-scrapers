@@ -1,2 +1,2 @@
-# sizematch-ikea-publisher-py
-SizeMatch Ikea Publisher written in Python
+# sizematch-publisher-py
+SizeMatch Publisher written in Python

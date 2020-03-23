@@ -8,8 +8,7 @@ import json
 import base64
 import logging
 
-from urls_publisher import URLsPublisher
-from ikea_publisher import IKEAScraper
+from publisher import Publisher, Scraper
 
 
 def get_secret(secret_id, version='latest'):
@@ -41,9 +40,10 @@ def load_config(event):
 
 
 def main(config):
-    scraper = IKEAScraper(config.get('scraper'))
-    URLsPublisher.create(scraper, config.get('publisher')) \
-                 .run()
+    scraper = Scraper.create(config.get('scraper'))
+    publisher = Publisher.create(config.get('publisher'))
+
+    publisher.run(scraper)
 
 
 def entrypoint_pubsub(event, context):

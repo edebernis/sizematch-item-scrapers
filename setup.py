@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 
 version = re.search(r'^__version__\s*=\s*"(.*)"',
-                    open('ikea_publisher/__init__.py').read(), re.M) \
+                    open('publisher/__init__.py').read(), re.M) \
             .group(1)
 
 
@@ -15,11 +15,10 @@ with open("README.md", "rb") as f:
 
 
 setup(
-    name="ikea_publisher",
+    name="publisher",
     packages=find_packages(),
     version=version,
-    description="Scrape IKEA categories and products and \
-publish them into RabbitMQ",
+    description="Scrape items and publish them into RabbitMQ",
     long_description=long_descr,
     author="Emeric de Bernis",
     author_email="emeric.debernis@gmail.com",
@@ -29,6 +28,8 @@ publish them into RabbitMQ",
     ],
     tests_require=[
         'pytest>=5.4.1',
-        'mock>=4.0.2'
+        'mock>=4.0.2',
+        'requests-mock>=1.7.0',
+        'pika>=1.1.0'
     ]
 )

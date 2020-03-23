@@ -4,15 +4,15 @@
 import re
 import logging
 
-from urls_publisher import Scraper
+from publisher.scrapers import Scraper
 
 
-class IKEAScraper(Scraper):
+class IKEA(Scraper):
     CATEGORY_URLS_REGEX = re.compile(r'http.+/cat/([^/]+)/', (re.I + re.M))
     PRODUCT_URLS_REGEX = re.compile(r'http.+/p/([^/]+)/', (re.I + re.M))
 
     def __init__(self, config):
-        super(IKEAScraper, self).__init__(config)
+        super(IKEA, self).__init__(config)
 
         self.base_url = config.get('base_url')
         self.lang = config.get('lang')
@@ -26,7 +26,7 @@ class IKEAScraper(Scraper):
             logging.error('Failed to fetch categories')
             return None
 
-        categories = set(IKEAScraper.CATEGORY_URLS_REGEX.findall(res.text))
+        categories = set(IKEA.CATEGORY_URLS_REGEX.findall(res.text))
         logging.debug('Fetched {} categories'.format(len(categories)))
 
         return categories
@@ -41,13 +41,13 @@ class IKEAScraper(Scraper):
                           .format(category))
             return None
 
-        products = IKEAScraper.PRODUCT_URLS_REGEX.findall(res.text)
+        products = IKEA.PRODUCT_URLS_REGEX.findall(res.text)
         logging.debug('Fetched {} products for category {}'
                       .format(len(products), category))
 
         return products
 
-    def get_urls(self):
+    def scrape(self):
         """This method cannot be a generator as we need to remove
            duplicates"""
         urls = set()
@@ -56,7 +56,7 @@ class IKEAScraper(Scraper):
         if not categories:
             return []
 
-        for category in categories:
+        for category in list(categories)[:1]:
             products = self._fetch_products(category)
             if products:
                 products_urls = [
@@ -65,4 +65,4 @@ class IKEAScraper(Scraper):
                 ]
                 urls.update(products_urls)
 
-        return urls
+        return [{'url': url} for url in urls]

@@ -14,4 +14,6 @@ services:
     depends_on:
       - rabbitmq
     environment:
-      - CONFIG_FILE=/usr/src/app/docker/config.json
+      - CONFIG_FILE=/app/docker/config.json
+    volumes:
+      - ${PWD}/publisher:/app/publisher
