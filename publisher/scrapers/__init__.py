@@ -5,7 +5,25 @@
 from requests.packages.urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 from importlib import import_module
+import json
 import requests
+
+
+class Item:
+    def __init__(self, urls, lang):
+        self.urls = urls
+        self.lang = lang
+
+
+class ItemEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Item):
+            return {
+                "urls": obj.urls,
+                "lang": obj.lang
+            }
+
+        return json.JSONEncoder.default(self, obj)
 
 
 class Scraper:

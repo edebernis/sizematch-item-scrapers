@@ -3,7 +3,7 @@
 
 from mock import Mock
 from pytest import fixture
-from ikea_publisher import IKEAScraper
+from publisher import Scraper, Item
 
 
 categories = None
@@ -11,7 +11,8 @@ categories = None
 
 @fixture
 def scraper():
-    return IKEAScraper({
+    return Scraper.create({
+        'name': 'ikea',
         'base_url': 'https://www.ikea.com',
         'lang': 'gb/en'
     })
@@ -23,27 +24,27 @@ def test_fetch_categories(scraper):
     assert len(categories) > 0
 
 
-def test_fetch_products(scraper):
+def test_fetch_items(scraper):
     global categories
-    products = scraper._fetch_products(list(categories)[0])
-    assert len(products) > 0
+    items = scraper._fetch_items(list(categories)[0])
+    assert len(items) > 0
 
 
-def test_get_urls(scraper, monkeypatch):
+def test_scrape(scraper, monkeypatch):
     with monkeypatch.context() as m:
         categories = {'category1', 'category2', 'category3'}
         mock_fetch_categories = Mock(return_value=categories)
         m.setattr(scraper, '_fetch_categories', mock_fetch_categories)
 
-        products = [
-            'https://www.ikea.com/products/1',
-            'https://www.ikea.com/products/2'
+        items = [
+            Item(['https://www.ikea.com/products/1'], 'en'),
+            Item(['https://www.ikea.com/products/2'], 'en')
         ]
-        mock_fetch_products = Mock(return_value=products)
-        m.setattr(scraper, '_fetch_products', mock_fetch_products)
+        mock_fetch_items = Mock(return_value=items)
+        m.setattr(scraper, '_fetch_items', mock_fetch_items)
 
-        urls = scraper.get_urls()
+        result = scraper.scrape()
 
         mock_fetch_categories.assert_called_once()
-        assert mock_fetch_products.call_count == 3
-        assert urls == set(products)
+        assert mock_fetch_items.call_count == 3
+        assert set(result) == set(items)

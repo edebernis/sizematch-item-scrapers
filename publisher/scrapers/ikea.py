@@ -4,7 +4,7 @@
 import re
 import logging
 
-from publisher.scrapers import Scraper
+from publisher.scrapers import Scraper, Item
 
 
 class IKEA(Scraper):
@@ -29,40 +29,40 @@ class IKEA(Scraper):
         categories = set(IKEA.CATEGORY_URLS_REGEX.findall(res.text))
         logging.debug('Fetched {} categories'.format(len(categories)))
 
-        return categories
+        return list(categories)
 
-    def _fetch_products(self, category):
-        logging.debug('Fetching products of category {}'.format(category))
+    def _fetch_items(self, category):
+        logging.debug('Fetching items of category {}'.format(category))
 
         url = '{}/{}/cat/{}/'.format(self.base_url, self.lang, category)
         res = self.do_request('get', url)
         if not res:
-            logging.error('Failed to fetch products for category {}'
+            logging.error('Failed to fetch items for category {}'
                           .format(category))
             return None
 
-        products = IKEA.PRODUCT_URLS_REGEX.findall(res.text)
-        logging.debug('Fetched {} products for category {}'
-                      .format(len(products), category))
+        items_url = IKEA.PRODUCT_URLS_REGEX.findall(res.text)
+        logging.debug('Fetched {} items for category {}'
+                      .format(len(items_url), category))
 
-        return products
+        return [
+            Item(
+                urls=['{}/{}/p/{}'.format(self.base_url, self.lang, url)],
+                lang=self.lang
+            )
+            for url in items_url]
 
     def scrape(self):
         """This method cannot be a generator as we need to remove
            duplicates"""
-        urls = set()
-
         categories = self._fetch_categories()
         if not categories:
             return []
 
-        for category in list(categories)[:1]:
-            products = self._fetch_products(category)
-            if products:
-                products_urls = [
-                    '{}/{}/p/{}'.format(self.base_url, self.lang, product)
-                    for product in products
-                ]
-                urls.update(products_urls)
+        items = set()
+        for category in categories[:1]:
+            _items = self._fetch_items(category)
+            if _items:
+                items.update(_items)
 
-        return [{'url': url} for url in urls]
+        return list(items)

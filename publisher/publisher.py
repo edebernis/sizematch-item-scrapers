@@ -5,6 +5,8 @@ import pika
 import json
 import logging
 
+from publisher import ItemEncoder
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -79,8 +81,8 @@ are mandatory')
 
     def _on_started(self):
         try:
-            for data in self._scraper.scrape():
-                self._publish(data)
+            for item in self._scraper.scrape():
+                self._publish(item)
         finally:
             self._stop()
 
@@ -183,7 +185,7 @@ are mandatory')
             '%i were acked and %i were nacked', self._message_number,
             len(self._deliveries), self._acked, self._nacked)
 
-    def _publish(self, message):
+    def _publish(self, item):
         if self._channel is None or not self._channel.is_open:
             return
 
@@ -195,14 +197,14 @@ are mandatory')
         self._channel.basic_publish(
             exchange=self._exchange_name,
             routing_key=self._routing_key,
-            body=json.dumps(message, ensure_ascii=False),
+            body=json.dumps(item, ensure_ascii=False, cls=ItemEncoder),
             properties=properties,
             mandatory=True)
 
         self._message_number += 1
         self._deliveries.append(self._message_number)
 
-        LOGGER.debug('Published message # %i', self._message_number)
+        LOGGER.debug('Published item # %i', self._message_number)
 
     def _stop(self):
         LOGGER.debug('Stopping publisher')
