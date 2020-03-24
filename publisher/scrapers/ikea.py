@@ -60,7 +60,7 @@ class IKEA(Scraper):
             return []
 
         items = set()
-        for category in categories[:1]:
+        for category in categories:
             _items = self._fetch_items(category)
             if _items:
                 items.update(_items)
