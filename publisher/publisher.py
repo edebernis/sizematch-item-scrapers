@@ -11,8 +11,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Publisher:
-    def __init__(self, amqp_url, exchange_name, exchange_type, queue_name,
-                 routing_key, app_id):
+    def __init__(self, amqp_url, app_id):
         self._connection = None
         self._channel = None
         self._deliveries = None
@@ -21,53 +20,37 @@ class Publisher:
         self._message_number = None
         self._stopping = False
         self._scraper = None
+        self._result = None
 
         self._url = amqp_url
-        self._exchange_name = exchange_name
-        self._exchange_type = exchange_type
-        self._queue_name = queue_name
-        self._routing_key = routing_key
         self._app_id = app_id
 
     @staticmethod
-    def create(config):
+    def create(host, port, username, password, vhost, connection_attempts,
+               heartbeat, app_id):
         amqp_url = 'amqp://{}:{}@{}:{}/{}?connection_attempts={}&\
 heartbeat={}'.format(
-            config.get('username', ''),
-            config.get('password', ''),
-            config.get('host', ''),
-            config.get('port', 5672),
-            config.get('vhost', ''),
-            config.get('connection_attempts', 3),
-            config.get('heartbeat', 3600))
+            username,
+            password,
+            host,
+            port,
+            vhost,
+            connection_attempts,
+            heartbeat)
 
-        if None in (
-          config.get('exchange'),
-          config.get('queue'),
-          config.get('routing_key'),
-          config.get('app_id')):
-            raise Exception('Exchange, queue, routing_key and app_id parameters \
-are mandatory')
+        return Publisher(amqp_url, app_id)
 
-        return Publisher(
-            amqp_url,
-            config.get('exchange'),
-            'direct',
-            config.get('queue'),
-            config.get('routing_key'),
-            config.get('app_id'))
-
-    def run(self, scraper):
+    def run(self, scraper, exchange_name, routing_key, queue_name):
         self._scraper = scraper
-        self._start()
+        self._exchange_name = exchange_name
+        self._routing_key = routing_key
+        self._queue_name = queue_name
+
+        return self._start()
 
     def _start(self):
         while not self._stopping:
-            self._connection = None
-            self._deliveries = []
-            self._acked = 0
-            self._nacked = 0
-            self._message_number = 0
+            self._reset()
 
             try:
                 self._connection = self._connect()
@@ -79,10 +62,21 @@ are mandatory')
                     # Finish closing
                     self._connection.ioloop.start()
 
+        return self._result
+
+    def _reset(self):
+        self._connection = None
+        self._deliveries = []
+        self._acked = 0
+        self._nacked = 0
+        self._message_number = 0
+        self._result = None
+
     def _on_started(self):
         try:
             for item in self._scraper.scrape():
                 self._publish(item)
+            self._result = self._scraper.result()
         finally:
             self._stop()
 
@@ -135,7 +129,7 @@ are mandatory')
         LOGGER.debug('Declaring exchange %s', exchange_name)
         self._channel.exchange_declare(
             exchange=exchange_name,
-            exchange_type=self._exchange_type,
+            exchange_type='direct',
             callback=self._on_exchange_declareok)
 
     def _on_exchange_declareok(self, _unused_frame):
@@ -206,7 +200,6 @@ are mandatory')
 
     def _stop(self):
         LOGGER.debug('Stopping publisher')
-        self._scraper = None
         self._stopping = True
         self._close_channel()
         self._close_connection()

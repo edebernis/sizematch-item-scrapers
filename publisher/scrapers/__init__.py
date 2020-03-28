@@ -10,7 +10,8 @@ import requests
 
 
 class Item:
-    def __init__(self, urls, lang):
+    def __init__(self, source, urls, lang):
+        self.source = source
         self.urls = urls
         self.lang = lang
 
@@ -19,6 +20,7 @@ class ItemEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Item):
             return {
+                "source": obj.source,
                 "urls": obj.urls,
                 "lang": obj.lang
             }
@@ -27,14 +29,11 @@ class ItemEncoder(json.JSONEncoder):
 
 
 class Scraper:
-    def __init__(self, config):
-        self.config = config
-
     @staticmethod
-    def create(config):
-        scraper_class = _load_scraper(config.get('name'))
+    def create(name, args):
+        scraper_class = _load_scraper(name)
         if scraper_class is not None:
-            return scraper_class(config)
+            return scraper_class(args)
 
     def _get_session(self, protocol, retries):
         session = requests.Session()
@@ -60,6 +59,9 @@ class Scraper:
             return None
 
     def scrape(self):
+        raise NotImplementedError()
+
+    def result(self):
         raise NotImplementedError()
 
 

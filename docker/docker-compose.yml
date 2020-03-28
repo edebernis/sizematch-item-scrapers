@@ -8,13 +8,34 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=user
       - RABBITMQ_DEFAULT_PASS=password
-  app:
+  celery:
     build:
       context: ..
       dockerfile: docker/Dockerfile
     depends_on:
       - rabbitmq
+    command: celery -A main.celery worker -l info
+    restart: unless-stopped
     environment:
-      - CONFIG_FILE=/app/docker/config.json
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=user
+      - RABBITMQ_PASSWORD=password
+  targeter:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    depends_on:
+      - rabbitmq
+      - celery
+    ports:
+      - 8000:8000
+    restart: unless-stopped
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=user
+      - RABBITMQ_PASSWORD=password
+      - RABBITMQ_APP_ID=sizematch-targeter
     volumes:
       - ${PWD}/publisher:/app/publisher

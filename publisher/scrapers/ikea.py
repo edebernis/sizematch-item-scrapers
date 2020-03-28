@@ -8,14 +8,15 @@ from publisher.scrapers import Scraper, Item
 
 
 class IKEA(Scraper):
+    SOURCE = 'ikea'
     CATEGORY_URLS_REGEX = re.compile(r'http.+/cat/([^/]+)/', (re.I + re.M))
     PRODUCT_URLS_REGEX = re.compile(r'http.+/p/([^/]+)/', (re.I + re.M))
 
-    def __init__(self, config):
-        super(IKEA, self).__init__(config)
-
-        self.base_url = config.get('base_url')
-        self.lang = config.get('lang')
+    def __init__(self, args):
+        self.base_url = args.get('base_url')
+        self.lang = args.get('lang')
+        self.categories_limit = args.get('categories_limit')
+        self._result = {}
 
     def _fetch_categories(self):
         logging.debug('Fetching categories')
@@ -47,6 +48,7 @@ class IKEA(Scraper):
 
         return [
             Item(
+                source=IKEA.SOURCE,
                 urls=['{}/{}/p/{}'.format(self.base_url, self.lang, url)],
                 lang=self.lang
             )
@@ -59,10 +61,19 @@ class IKEA(Scraper):
         if not categories:
             return []
 
+        if self.categories_limit:
+            categories = categories[:self.categories_limit]
+
+        self._result['categories'] = len(categories)
+
         items = set()
         for category in categories:
             _items = self._fetch_items(category)
             if _items:
                 items.update(_items)
 
+        self._result['items'] = len(items)
         return list(items)
+
+    def result(self):
+        return self._result
