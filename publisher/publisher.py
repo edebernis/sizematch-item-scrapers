@@ -136,7 +136,6 @@ are mandatory')
         self._channel.exchange_declare(
             exchange=exchange_name,
             exchange_type=self._exchange_type,
-            auto_delete=True,
             callback=self._on_exchange_declareok)
 
     def _on_exchange_declareok(self, _unused_frame):
@@ -147,7 +146,6 @@ are mandatory')
         LOGGER.debug('Declaring queue %s', queue_name)
         self._channel.queue_declare(
             queue=queue_name,
-            auto_delete=True,
             callback=self._on_queue_declareok)
 
     def _on_queue_declareok(self, _unused_frame):

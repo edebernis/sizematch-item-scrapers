@@ -12,9 +12,9 @@
         "port": 5672,
         "username": "user",
         "password": "password",
-        "exchange": "product_urls",
-        "queue": "ikea",
-        "routing_key": "product_urls.ikea",
-        "app_id": "ikea-publisher"
+        "exchange": "sizematch-items",
+        "queue": "sizematch-scraper-ikea",
+        "routing_key": "items.scrape.ikea",
+        "app_id": "sizematch-ikea-publisher"
     }
 }
