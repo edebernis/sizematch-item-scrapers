@@ -5,7 +5,7 @@ import pika
 import json
 import logging
 
-from publisher import ItemEncoder
+from . import ItemEncoder
 
 LOGGER = logging.getLogger(__name__)
 

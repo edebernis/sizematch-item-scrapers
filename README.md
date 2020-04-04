@@ -1,2 +1,2 @@
-# sizematch-publisher-py
-SizeMatch Publisher written in Python
+# sizematch-item-scrapers
+Scrape items and publish them into RabbitMQ

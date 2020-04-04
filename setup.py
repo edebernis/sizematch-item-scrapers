@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 
 version = re.search(r'^__version__\s*=\s*"(.*)"',
-                    open('publisher/__init__.py').read(), re.M) \
+                    open('item_scrapers/__init__.py').read(), re.M) \
             .group(1)
 
 
@@ -15,7 +15,7 @@ with open("README.md", "rb") as f:
 
 
 setup(
-    name="publisher",
+    name="sizematch-item-scrapers",
     packages=find_packages(),
     version=version,
     description="Scrape items and publish them into RabbitMQ",

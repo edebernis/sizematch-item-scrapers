@@ -21,7 +21,7 @@ services:
       - RABBITMQ_PORT=5672
       - RABBITMQ_USERNAME=user
       - RABBITMQ_PASSWORD=password
-  targeter:
+  scraper:
     build:
       context: ..
       dockerfile: docker/Dockerfile
@@ -36,6 +36,6 @@ services:
       - RABBITMQ_PORT=5672
       - RABBITMQ_USERNAME=user
       - RABBITMQ_PASSWORD=password
-      - RABBITMQ_APP_ID=sizematch-targeter
+      - RABBITMQ_APP_ID=sizematch-item-scrapers
     volumes:
       - ${PWD}/publisher:/app/publisher

@@ -4,7 +4,7 @@
 import re
 import logging
 
-from publisher.scrapers import Scraper, Item
+from . import Scraper, Item
 
 
 class IKEA(Scraper):

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
 from requests.packages.urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 from importlib import import_module
@@ -67,5 +66,5 @@ class Scraper:
 
 def _load_scraper(name):
     return {
-        'ikea': getattr(import_module('publisher.scrapers.ikea'), 'IKEA'),
+        'ikea': getattr(import_module('item_scrapers.scrapers.ikea'), 'IKEA'),
     }.get(name)

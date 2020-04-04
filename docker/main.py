@@ -4,7 +4,7 @@
 from flask import Flask, request, abort
 from celery import Celery
 from celery.result import AsyncResult
-from publisher import Publisher, Scraper
+from item_scrapers import Publisher, Scraper
 import os
 import logging
 
