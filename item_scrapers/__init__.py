@@ -3,5 +3,5 @@
 
 __version__ = "0.0.1"
 
-from .scrapers import Scraper, Item, ItemEncoder  # noqa: F401
+from .scrapers import Scraper  # noqa: F401
 from .publisher import Publisher  # noqa: F401

@@ -2,10 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import pika
-import json
 import logging
-
-from . import ItemEncoder
 
 LOGGER = logging.getLogger(__name__)
 
@@ -189,7 +186,7 @@ heartbeat={}'.format(
         self._channel.basic_publish(
             exchange=self._exchange_name,
             routing_key=self._routing_key,
-            body=json.dumps(item, ensure_ascii=False, cls=ItemEncoder),
+            body=item.SerializeToString(),
             properties=properties,
             mandatory=True)
 

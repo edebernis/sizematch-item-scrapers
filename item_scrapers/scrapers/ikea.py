@@ -4,7 +4,8 @@
 import re
 import logging
 
-from . import Scraper, Item
+from sizematch.protobuf.items_pb2 import Item
+from . import Scraper
 
 
 class IKEA(Scraper):
@@ -32,27 +33,21 @@ class IKEA(Scraper):
 
         return list(categories)
 
-    def _fetch_items(self, category):
-        logging.debug('Fetching items of category {}'.format(category))
+    def _fetch_items_urls(self, category):
+        logging.debug('Fetching items urls of category {}'.format(category))
 
         url = '{}/{}/cat/{}/'.format(self.base_url, self.lang, category)
         res = self.do_request('get', url)
         if not res:
-            logging.error('Failed to fetch items for category {}'
+            logging.error('Failed to fetch items urls for category {}'
                           .format(category))
             return None
 
-        items_url = IKEA.PRODUCT_URLS_REGEX.findall(res.text)
-        logging.debug('Fetched {} items for category {}'
-                      .format(len(items_url), category))
+        items_urls = IKEA.PRODUCT_URLS_REGEX.findall(res.text)
+        logging.debug('Fetched {} items urls for category {}'
+                      .format(len(items_urls), category))
 
-        return [
-            Item(
-                source=IKEA.SOURCE,
-                urls=['{}/{}/p/{}'.format(self.base_url, self.lang, url)],
-                lang=self.lang
-            )
-            for url in items_url]
+        return items_urls
 
     def scrape(self):
         """This method cannot be a generator as we need to remove
@@ -66,14 +61,23 @@ class IKEA(Scraper):
 
         self._result['categories'] = len(categories)
 
-        items = set()
+        # Remove duplicate urls
+        items_urls = set()
         for category in categories:
-            _items = self._fetch_items(category)
-            if _items:
-                items.update(_items)
+            urls = self._fetch_items_urls(category)
+            if urls:
+                items_urls.update(urls)
 
+        items = [
+            Item(
+                source=IKEA.SOURCE,
+                urls=['{}/{}/p/{}'.format(self.base_url, self.lang, url)],
+                lang=self.lang
+            )
+            for url in items_urls
+        ]
         self._result['items'] = len(items)
-        return list(items)
+        return items
 
     def result(self):
         return self._result
