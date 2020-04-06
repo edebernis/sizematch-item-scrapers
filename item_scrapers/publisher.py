@@ -180,7 +180,7 @@ heartbeat={}'.format(
 
         properties = pika.BasicProperties(
             app_id=self._app_id,
-            content_type='application/json',
+            content_type='application/protobuf',
             delivery_mode=1)
 
         self._channel.basic_publish(
