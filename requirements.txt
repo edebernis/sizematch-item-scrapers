@@ -1,3 +1,3 @@
 requests==2.21.0
 pika==1.1.0
-git+https://${GITHUB_TOKEN}@github.com/edebernis/sizematch-protobuf.git@v0.0.1#egg=sizematch-protobuf&subdirectory=build/python
+git+https://${GITHUB_TOKEN}@github.com/edebernis/sizematch-protobuf.git@v0.0.2#egg=sizematch-protobuf&subdirectory=build/python
