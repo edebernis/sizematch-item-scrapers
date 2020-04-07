@@ -4,7 +4,7 @@
 import re
 import logging
 
-from sizematch.protobuf.items_pb2 import Item
+from sizematch.protobuf.items.items_pb2 import Item
 from . import Scraper
 
 
