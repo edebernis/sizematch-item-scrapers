@@ -71,9 +71,9 @@ heartbeat={}'.format(
 
     def _on_started(self):
         try:
-            for item in self._scraper.scrape():
+            items, self._result = self._scraper.scrape()
+            for item in items:
                 self._publish(item)
-            self._result = self._scraper.result()
         finally:
             self._stop()
 

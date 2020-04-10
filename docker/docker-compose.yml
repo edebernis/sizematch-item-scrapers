@@ -23,6 +23,8 @@ services:
       - RABBITMQ_PORT=5672
       - RABBITMQ_USERNAME=user
       - RABBITMQ_PASSWORD=password
+    volumes:
+      - ${PWD}/item_scrapers:/app/item_scrapers
   scraper:
     build:
       context: ..
@@ -42,4 +44,4 @@ services:
       - RABBITMQ_PASSWORD=password
       - RABBITMQ_APP_ID=sizematch-item-scrapers
     volumes:
-      - ${PWD}/publisher:/app/publisher
+      - ${PWD}/item_scrapers:/app/item_scrapers

@@ -4,25 +4,23 @@
 import re
 import logging
 
-from sizematch.protobuf.items.items_pb2 import Item
 from . import Scraper
 
 
 class IKEA(Scraper):
-    SOURCE = 'ikea'
     CATEGORY_URLS_REGEX = re.compile(r'http.+/cat/([^/]+)/', (re.I + re.M))
     PRODUCT_URLS_REGEX = re.compile(r'http.+/p/([^/]+)/', (re.I + re.M))
 
-    def __init__(self, args):
+    def __init__(self, source, lang, args):
+        super(IKEA, self).__init__(source, lang)
+
         self.base_url = args.get('base_url')
-        self.lang = args.get('lang')
         self.categories_limit = args.get('categories_limit')
-        self._result = {}
 
     def _fetch_categories(self):
         logging.debug('Fetching categories')
 
-        url = '{}/{}/cat/products-products/'.format(self.base_url, self.lang)
+        url = '{}/cat/products-products/'.format(self.base_url)
         res = self.do_request('get', url)
         if not res:
             logging.error('Failed to fetch categories')
@@ -36,7 +34,7 @@ class IKEA(Scraper):
     def _fetch_items_urls(self, category):
         logging.debug('Fetching items urls of category {}'.format(category))
 
-        url = '{}/{}/cat/{}/'.format(self.base_url, self.lang, category)
+        url = '{}/cat/{}/'.format(self.base_url, category)
         res = self.do_request('get', url)
         if not res:
             logging.error('Failed to fetch items urls for category {}'
@@ -49,9 +47,11 @@ class IKEA(Scraper):
 
         return items_urls
 
-    def scrape(self):
+    def get_items_urls(self):
         """This method cannot be a generator as we need to remove
            duplicates"""
+        result = {}
+
         categories = self._fetch_categories()
         if not categories:
             return []
@@ -59,7 +59,7 @@ class IKEA(Scraper):
         if self.categories_limit:
             categories = categories[:self.categories_limit]
 
-        self._result['categories'] = len(categories)
+        result['categories'] = len(categories)
 
         # Remove duplicate urls
         items_urls = set()
@@ -68,16 +68,7 @@ class IKEA(Scraper):
             if urls:
                 items_urls.update(urls)
 
-        items = [
-            Item(
-                source=IKEA.SOURCE,
-                urls=['{}/{}/p/{}'.format(self.base_url, self.lang, url)],
-                lang=self.lang
-            )
-            for url in items_urls
-        ]
-        self._result['items'] = len(items)
-        return items
+        result['items'] = len(items_urls)
 
-    def result(self):
-        return self._result
+        return [['{}/p/{}'.format(self.base_url, url)]
+                for url in items_urls], result

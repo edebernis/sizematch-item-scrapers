@@ -75,9 +75,9 @@ publisher = create_publisher()
 
 
 @celery.task()
-def scrape_task(scraper_name, scraper_args, exchange_name, routing_key,
+def scrape_task(source, lang, scraper_args, exchange_name, routing_key,
                 queue_name):
-    scraper = Scraper.create(scraper_name, scraper_args)
+    scraper = Scraper.create(source, lang, scraper_args)
     return publisher.run(scraper, exchange_name, routing_key, queue_name)
 
 
@@ -95,8 +95,8 @@ def get_task(task_id):
     return {'task': task}
 
 
-@app.route('/scrapers/<scraper_name>/scrape', methods=['POST'])
-def scrape(scraper_name):
+@app.route('/sources/<source>/<lang>/scrape', methods=['POST'])
+def scrape(source, lang):
     if not request.json:
         abort(400, 'No parameters provided')
 
@@ -110,7 +110,7 @@ def scrape(scraper_name):
 are mandatory')
 
     result = scrape_task.delay(
-        scraper_name, scraper_args, exchange_name, routing_key, queue_name
+        source, lang, scraper_args, exchange_name, routing_key, queue_name
     )
 
     return {
@@ -118,7 +118,8 @@ are mandatory')
             'id': result.id,
             'state': result.state,
             'args': {
-                'scraper': scraper_name,
+                'source': source,
+                'lang': lang,
                 'scraper_args': scraper_args,
                 'exchange': exchange_name,
                 'routing_key': routing_key,
