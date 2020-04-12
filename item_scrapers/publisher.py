@@ -46,14 +46,13 @@ heartbeat={}'.format(
         return self._start()
 
     def _start(self):
+        self._reset()
         while not self._stopping:
-            self._reset()
-
             try:
                 self._connection = self._connect()
                 self._connection.ioloop.start()
             except KeyboardInterrupt:
-                self.stop()
+                self._stop()
                 if (self._connection is not None and
                         not self._connection.is_closed):
                     # Finish closing
@@ -63,6 +62,8 @@ heartbeat={}'.format(
 
     def _reset(self):
         self._connection = None
+        self._channel = None
+        self._stopping = False
         self._deliveries = []
         self._acked = 0
         self._nacked = 0
