@@ -8,67 +8,75 @@ from . import Scraper
 
 
 class IKEA(Scraper):
-    CATEGORY_URLS_REGEX = re.compile(r'http.+/cat/([^/]+)/', (re.I + re.M))
-    PRODUCT_URLS_REGEX = re.compile(r'http.+/p/([^/]+)/', (re.I + re.M))
+    MAIN_CATEGORY = "products-products"
+    CATEGORY_URLS_REGEX = re.compile(r'http.+/cat/([a-z0-9\-\_]+)(?:\?|/)',
+                                     (re.I + re.M))
+    PRODUCT_URLS_REGEX = re.compile(r'http.+/p/([a-z0-9\-\_]+)(?:\?|/)',
+                                    (re.I + re.M))
 
     def __init__(self, source, lang, args):
         super(IKEA, self).__init__(source, lang)
 
         self.base_url = args.get('base_url')
-        self.categories_limit = args.get('categories_limit')
 
-    def _fetch_categories(self):
-        logging.debug('Fetching categories')
-
-        url = '{}/cat/products-products/'.format(self.base_url)
-        res = self.do_request('get', url)
-        if not res:
-            logging.error('Failed to fetch categories')
-            return None
-
-        categories = set(IKEA.CATEGORY_URLS_REGEX.findall(res.text))
-        logging.debug('Fetched {} categories'.format(len(categories)))
-
-        return list(categories)
-
-    def _fetch_items_urls(self, category):
-        logging.debug('Fetching items urls of category {}'.format(category))
+    def _get_page(self, category, page=None):
+        logging.debug('Fetching items urls of category {}, page {}'.format(
+            category, page if page else 1))
 
         url = '{}/cat/{}/'.format(self.base_url, category)
+        if page is not None:
+            url = '{}page-{}/'.format(url, page)
+
         res = self.do_request('get', url)
         if not res:
-            logging.error('Failed to fetch items urls for category {}'
+            logging.error('Failed to get category {}'
                           .format(category))
-            return None
+            return set(), set()
 
-        items_urls = IKEA.PRODUCT_URLS_REGEX.findall(res.text)
-        logging.debug('Fetched {} items urls for category {}'
-                      .format(len(items_urls), category))
+        return (set(IKEA.CATEGORY_URLS_REGEX.findall(res.text)),
+                set(IKEA.PRODUCT_URLS_REGEX.findall(res.text)))
 
-        return items_urls
+    def _get_category(self, category):
+        categories = set()
+        urls = set()
+        page = None
+
+        while True:
+            new_categories, new_urls = self._get_page(category, page)
+
+            if new_categories.issubset(categories) and \
+               new_urls.issubset(urls):
+                return categories, urls
+
+            categories.update(new_categories)
+            urls.update(new_urls)
+
+            page = page+1 if page else 2
+
+    def _get_all(self, category, categories, urls):
+        if category in categories:
+            return
+
+        new_categories, new_urls = self._get_category(category)
+
+        categories.add(category)
+        urls.update(new_urls)
+
+        for new_category in new_categories:
+            self._get_category(new_category, categories, urls)
+
+        return categories, urls
 
     def get_items_urls(self):
-        """This method cannot be a generator as we need to remove
-           duplicates"""
-        result = {}
+        categories, urls = self._get_all(
+            category=IKEA.MAIN_CATEGORY,
+            categories=set(),
+            urls=set())
 
-        categories = self._fetch_categories()
-        if not categories:
-            return []
-
-        if self.categories_limit:
-            categories = categories[:self.categories_limit]
-
-        result['categories'] = len(categories)
-
-        # Remove duplicate urls
-        items_urls = set()
-        for category in categories:
-            urls = self._fetch_items_urls(category)
-            if urls:
-                items_urls.update(urls)
-
-        result['items'] = len(items_urls)
+        result = {
+            'categories': len(categories),
+            'items': len(urls)
+        }
 
         return [['{}/p/{}'.format(self.base_url, url)]
-                for url in items_urls], result
+                for url in urls], result
