@@ -63,7 +63,7 @@ class IKEA(Scraper):
         urls.update(new_urls)
 
         for new_category in new_categories:
-            self._get_category(new_category, categories, urls)
+            self._get_all(new_category, categories, urls)
 
         return categories, urls
 
