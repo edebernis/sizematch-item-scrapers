@@ -6,13 +6,11 @@ ARG GITHUB_TOKEN
 ENV GITHUB_TOKEN=$GITHUB_TOKEN
 
 COPY requirements.txt ./
-COPY docker/requirements.txt ./docker_requirements.txt
 
 RUN apk --no-cache add git \
-    && pip install --no-cache-dir -r docker_requirements.txt
+    && pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-RUN mv docker/main.py main.py
 
 RUN addgroup -g 1000 -S app_user && \
     adduser -u 1000 -S app_user -G app_user

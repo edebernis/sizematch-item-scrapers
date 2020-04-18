@@ -9,9 +9,8 @@ services:
       - RABBITMQ_DEFAULT_USER=user
       - RABBITMQ_DEFAULT_PASS=password
   celery:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
+    build: 
+      context: .
       args:
         GITHUB_TOKEN: $GITHUB_TOKEN
     depends_on:
@@ -23,12 +22,14 @@ services:
       - RABBITMQ_PORT=5672
       - RABBITMQ_USERNAME=user
       - RABBITMQ_PASSWORD=password
+      - PUBLISHER_EXCHANGE_NAME=sizematch-items
+      - SCRAPERS_CONF_FILE=/app/scrapers.conf
     volumes:
       - ${PWD}/item_scrapers:/app/item_scrapers
+      - ${PWD}/scrapers.conf.dev:/app/scrapers.conf
   scraper:
     build:
-      context: ..
-      dockerfile: docker/Dockerfile
+      context: .
       args:
         GITHUB_TOKEN: $GITHUB_TOKEN
     depends_on:
@@ -43,5 +44,8 @@ services:
       - RABBITMQ_USERNAME=user
       - RABBITMQ_PASSWORD=password
       - RABBITMQ_APP_ID=sizematch-item-scrapers
+      - PUBLISHER_EXCHANGE_NAME=sizematch-items
+      - SCRAPERS_CONF_FILE=/app/scrapers.conf
     volumes:
       - ${PWD}/item_scrapers:/app/item_scrapers
+      - ${PWD}/scrapers.conf.dev:/app/scrapers.conf

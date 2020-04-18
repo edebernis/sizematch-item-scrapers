@@ -2,26 +2,16 @@
 # -*- coding: utf-8 -*-
 
 from sizematch.protobuf.items.items_pb2 import Item, Lang
+
 from requests.packages.urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
-from importlib import import_module
 import requests
 
 
-class Scraper:
-    def __init__(self, source, lang):
-        self.source = source
-        self.lang = lang
-
-    @staticmethod
-    def create(source, lang, args):
-        _lang = Lang.Value(lang.upper())
-        if _lang is None:
-            raise Exception('Unsupported lang: %s' % lang)
-
-        scraper_class = _load_scraper(source)
-        if scraper_class is not None:
-            return scraper_class(source, _lang, args)
+class BaseScraper:
+    def __init__(self, config):
+        self.name = config.get('name')
+        self.routing_key = config.get('routing_key')
 
     def _get_session(self, protocol, retries):
         session = requests.Session()
@@ -47,17 +37,23 @@ class Scraper:
             return None
 
     def scrape(self):
-        items_urls, result = self.get_items_urls()
-        items = [Item(source=self.source, urls=urls, lang=self.lang)
-                 for urls in items_urls]
+        items = []
+        results = {}
+        for lang in self.__class__.LANGS:
+            try:
+                items_urls, result = self.get_items_urls(lang)
+                items += [
+                    Item(
+                        source=self.name,
+                        urls=urls,
+                        lang=lang
+                    ) for urls in items_urls
+                ]
+                results[Lang.Name(lang)] = result
+            except Exception as e:
+                results[Lang.Name(lang)] = str(e)
 
-        return items, result
+        return items, results
 
     def get_items_urls(self):
         raise NotImplementedError()
-
-
-def _load_scraper(source):
-    return {
-        'ikea': getattr(import_module('item_scrapers.scrapers.ikea'), 'IKEA'),
-    }.get(source)

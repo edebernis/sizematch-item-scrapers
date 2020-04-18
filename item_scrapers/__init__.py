@@ -2,6 +2,3 @@
 # -*- coding: utf-8 -*-
 
 __version__ = "0.0.1"
-
-from .scrapers import Scraper  # noqa: F401
-from .publisher import Publisher  # noqa: F401

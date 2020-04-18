@@ -8,7 +8,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Publisher:
-    def __init__(self, amqp_url, app_id):
+    def __init__(self, amqp_url, app_id, exchange_name):
         self._connection = None
         self._channel = None
         self._deliveries = None
@@ -21,10 +21,11 @@ class Publisher:
 
         self._url = amqp_url
         self._app_id = app_id
+        self._exchange_name = exchange_name
 
     @staticmethod
     def create(host, port, username, password, vhost, connection_attempts,
-               heartbeat, app_id):
+               heartbeat, app_id, exchange_name):
         amqp_url = 'amqp://{}:{}@{}:{}/{}?connection_attempts={}&\
 heartbeat={}'.format(
             username,
@@ -35,14 +36,10 @@ heartbeat={}'.format(
             connection_attempts,
             heartbeat)
 
-        return Publisher(amqp_url, app_id)
+        return Publisher(amqp_url, app_id, exchange_name)
 
-    def run(self, scraper, exchange_name, routing_key, queue_name):
+    def run(self, scraper):
         self._scraper = scraper
-        self._exchange_name = exchange_name
-        self._routing_key = routing_key
-        self._queue_name = queue_name
-
         return self._start()
 
     def _start(self):
@@ -111,7 +108,7 @@ heartbeat={}'.format(
         LOGGER.debug('Channel opened')
         self._channel = channel
         self._add_on_channel_close_callback()
-        self._setup_exchange(self._exchange_name)
+        self._enable_delivery_confirmations()
 
     def _add_on_channel_close_callback(self):
         LOGGER.debug('Adding channel close callback')
@@ -122,36 +119,6 @@ heartbeat={}'.format(
         self._channel = None
         if not self._stopping:
             self._connection.close()
-
-    def _setup_exchange(self, exchange_name):
-        LOGGER.debug('Declaring exchange %s', exchange_name)
-        self._channel.exchange_declare(
-            exchange=exchange_name,
-            exchange_type='direct',
-            callback=self._on_exchange_declareok)
-
-    def _on_exchange_declareok(self, _unused_frame):
-        LOGGER.debug('Exchange declared')
-        self._setup_queue(self._queue_name)
-
-    def _setup_queue(self, queue_name):
-        LOGGER.debug('Declaring queue %s', queue_name)
-        self._channel.queue_declare(
-            queue=queue_name,
-            callback=self._on_queue_declareok)
-
-    def _on_queue_declareok(self, _unused_frame):
-        LOGGER.debug('Binding %s to %s with %s', self._exchange_name,
-                     self._queue_name, self._routing_key)
-        self._channel.queue_bind(
-            self._queue_name,
-            self._exchange_name,
-            routing_key=self._routing_key,
-            callback=self._on_bindok)
-
-    def _on_bindok(self, _unused_frame):
-        LOGGER.debug('Queue bound')
-        self._enable_delivery_confirmations()
 
     def _enable_delivery_confirmations(self):
         LOGGER.debug('Issuing Confirm.Select RPC command')
@@ -186,7 +153,7 @@ heartbeat={}'.format(
 
         self._channel.basic_publish(
             exchange=self._exchange_name,
-            routing_key=self._routing_key,
+            routing_key=self._scraper.routing_key,
             body=item.SerializeToString(),
             properties=properties,
             mandatory=True)

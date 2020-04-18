@@ -1,0 +1,11 @@
+[
+  {
+    "name": "ikea",
+    "routing_key": "items.parse.ikea",
+    "base_url": "https://www.ikea.com",
+    "suffix": {
+      "fr": "fr/fr",
+      "en": "gb/en"
+    }
+  }
+]
