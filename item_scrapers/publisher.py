@@ -108,7 +108,7 @@ heartbeat={}'.format(
         LOGGER.debug('Channel opened')
         self._channel = channel
         self._add_on_channel_close_callback()
-        self._enable_delivery_confirmations()
+        self._setup_exchange()
 
     def _add_on_channel_close_callback(self):
         LOGGER.debug('Adding channel close callback')
@@ -119,6 +119,36 @@ heartbeat={}'.format(
         self._channel = None
         if not self._stopping:
             self._connection.close()
+
+    def _setup_exchange(self):
+        LOGGER.debug('Declaring exchange %s', self._exchange_name)
+        self._channel.exchange_declare(
+            exchange=self._exchange_name,
+            exchange_type='direct',
+            callback=self._on_exchange_declareok)
+
+    def _on_exchange_declareok(self, _unused_frame):
+        LOGGER.debug('Exchange declared')
+        self._setup_queue()
+
+    def _setup_queue(self):
+        LOGGER.debug('Declaring queue %s', self._scraper.queue_name)
+        self._channel.queue_declare(
+            queue=self._scraper.queue_name,
+            callback=self._on_queue_declareok)
+
+    def _on_queue_declareok(self, _unused_frame):
+        LOGGER.debug('Binding %s to %s with %s', self._exchange_name,
+                     self._scraper.queue_name, self._scraper.routing_key)
+        self._channel.queue_bind(
+            self._scraper.queue_name,
+            self._exchange_name,
+            routing_key=self._scraper.routing_key,
+            callback=self._on_bindok)
+
+    def _on_bindok(self, _unused_frame):
+        LOGGER.debug('Queue bound')
+        self._enable_delivery_confirmations()
 
     def _enable_delivery_confirmations(self):
         LOGGER.debug('Issuing Confirm.Select RPC command')

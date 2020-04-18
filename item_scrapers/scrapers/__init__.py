@@ -12,6 +12,7 @@ class BaseScraper:
     def __init__(self, config):
         self.name = config.get('name')
         self.routing_key = config.get('routing_key')
+        self.queue_name = config.get('queue')
 
     def _get_session(self, protocol, retries):
         session = requests.Session()
