@@ -157,7 +157,7 @@ AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36'
         ):
             if new_categories.issubset(categories) and \
                new_products.issubset(products):
-                return set(list(categories)[:2])
+                return categories
 
             categories.update(new_categories)
             products.update(new_products)

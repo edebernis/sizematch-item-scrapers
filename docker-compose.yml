@@ -23,10 +23,12 @@ services:
       - RABBITMQ_USERNAME=user
       - RABBITMQ_PASSWORD=password
       - PUBLISHER_EXCHANGE_NAME=sizematch-items
-      - SCRAPERS_CONF_FILE=/app/scrapers.conf
+      - PUBLISHER_ROUTING_KEY_PREFIX=items.parse
+      - PUBLISHER_QUEUE_NAME_PREFIX=sizematch-items-parser
+      - SOURCES_DIRECTORY=/app/sources
     volumes:
       - ${PWD}/item_scrapers:/app/item_scrapers
-      - ${PWD}/scrapers.conf.dev:/app/scrapers.conf
+      - ${PWD}/../sizematch-sources:/app/sources
   scraper:
     build:
       context: .
@@ -45,7 +47,9 @@ services:
       - RABBITMQ_PASSWORD=password
       - RABBITMQ_APP_ID=sizematch-item-scrapers
       - PUBLISHER_EXCHANGE_NAME=sizematch-items
-      - SCRAPERS_CONF_FILE=/app/scrapers.conf
+      - PUBLISHER_ROUTING_KEY_PREFIX=items.parse
+      - PUBLISHER_QUEUE_NAME_PREFIX=sizematch-items-parser
+      - SOURCES_DIRECTORY=/app/sources
     volumes:
       - ${PWD}/item_scrapers:/app/item_scrapers
-      - ${PWD}/scrapers.conf.dev:/app/scrapers.conf
+      - ${PWD}/../sizematch-sources:/app/sources

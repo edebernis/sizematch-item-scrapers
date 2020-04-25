@@ -79,7 +79,9 @@ def create_publisher():
         os.environ.get('RABBITMQ_CONNECTION_ATTEMPTS', 3),
         os.environ.get('RABBITMQ_HEARTBEAT', 3600),
         os.environ.get('RABBITMQ_APP_ID'),
-        os.environ.get('PUBLISHER_EXCHANGE_NAME'))
+        os.environ.get('PUBLISHER_EXCHANGE_NAME'),
+        os.environ.get('PUBLISHER_ROUTING_KEY_PREFIX'),
+        os.environ.get('PUBLISHER_QUEUE_NAME_PREFIX'))
 
 
 ###############################################################################
@@ -101,7 +103,7 @@ celery = create_celery_app(app)
 def scrape_task(source_name):
     source = sources.get(source_name)
     items = scraper.scrape(source)
-    publisher.publish(items)
+    publisher.publish(source, items)
 
 
 @app.route('/sources/<source>/scrape', methods=['POST'])

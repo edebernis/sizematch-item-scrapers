@@ -8,7 +8,8 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Publisher:
-    def __init__(self, amqp_url, app_id, exchange_name):
+    def __init__(self, amqp_url, app_id, exchange_name, routing_key_prefix,
+                 queue_prefix):
         self._connection = None
         self._channel = None
         self._deliveries = None
@@ -17,14 +18,19 @@ class Publisher:
         self._message_number = None
         self._stopping = False
         self._items = None
+        self._routing_key = None
+        self._queue_name = None
 
         self._url = amqp_url
         self._app_id = app_id
         self._exchange_name = exchange_name
+        self._routing_key_prefix = routing_key_prefix
+        self._queue_prefix = queue_prefix
 
     @staticmethod
     def create(host, port, username, password, vhost, connection_attempts,
-               heartbeat, app_id, exchange_name):
+               heartbeat, app_id, exchange_name, routing_key_prefix,
+               queue_prefix):
         amqp_url = 'amqp://{}:{}@{}:{}/{}?connection_attempts={}&\
 heartbeat={}'.format(
             username,
@@ -35,10 +41,20 @@ heartbeat={}'.format(
             connection_attempts,
             heartbeat)
 
-        return Publisher(amqp_url, app_id, exchange_name)
+        return Publisher(
+            amqp_url, app_id, exchange_name,
+            routing_key_prefix, queue_prefix
+        )
 
-    def publish(self, items):
+    def publish(self, source, items):
         self._items = items
+        self._routing_key = '{}.{}'.format(
+            self._routing_key_prefix, source.name
+        )
+        self._queue_name = '{}-{}'.format(
+            self._queue_prefix, source.name
+        )
+
         self._start()
 
     def _start(self):
@@ -62,7 +78,6 @@ heartbeat={}'.format(
         self._acked = 0
         self._nacked = 0
         self._message_number = 0
-        self._items = None
 
     def _on_started(self):
         try:
@@ -128,18 +143,18 @@ heartbeat={}'.format(
         self._setup_queue()
 
     def _setup_queue(self):
-        LOGGER.debug('Declaring queue %s', self._scraper.queue_name)
+        LOGGER.debug('Declaring queue %s', self._queue_name)
         self._channel.queue_declare(
-            queue=self._scraper.queue_name,
+            queue=self._queue_name,
             callback=self._on_queue_declareok)
 
     def _on_queue_declareok(self, _unused_frame):
         LOGGER.debug('Binding %s to %s with %s', self._exchange_name,
-                     self._scraper.queue_name, self._scraper.routing_key)
+                     self._queue_name, self._routing_key)
         self._channel.queue_bind(
-            self._scraper.queue_name,
+            self._queue_name,
             self._exchange_name,
-            routing_key=self._scraper.routing_key,
+            routing_key=self._routing_key,
             callback=self._on_bindok)
 
     def _on_bindok(self, _unused_frame):
@@ -179,7 +194,7 @@ heartbeat={}'.format(
 
         self._channel.basic_publish(
             exchange=self._exchange_name,
-            routing_key=self._scraper.routing_key,
+            routing_key=self._routing_key,
             body=item.SerializeToString(),
             properties=properties,
             mandatory=True)
