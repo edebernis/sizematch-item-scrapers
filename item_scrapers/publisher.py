@@ -16,8 +16,7 @@ class Publisher:
         self._nacked = None
         self._message_number = None
         self._stopping = False
-        self._scraper = None
-        self._result = None
+        self._items = None
 
         self._url = amqp_url
         self._app_id = app_id
@@ -38,9 +37,9 @@ heartbeat={}'.format(
 
         return Publisher(amqp_url, app_id, exchange_name)
 
-    def run(self, scraper):
-        self._scraper = scraper
-        return self._start()
+    def publish(self, items):
+        self._items = items
+        self._start()
 
     def _start(self):
         self._reset()
@@ -55,8 +54,6 @@ heartbeat={}'.format(
                     # Finish closing
                     self._connection.ioloop.start()
 
-        return self._result
-
     def _reset(self):
         self._connection = None
         self._channel = None
@@ -65,12 +62,11 @@ heartbeat={}'.format(
         self._acked = 0
         self._nacked = 0
         self._message_number = 0
-        self._result = None
+        self._items = None
 
     def _on_started(self):
         try:
-            items, self._result = self._scraper.scrape()
-            for item in items:
+            for item in self._items:
                 self._publish(item)
         finally:
             self._stop()

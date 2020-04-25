@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from item_scrapers.publisher import Publisher
+from item_scrapers import Source, Scraper, Publisher
 
 from flask import Flask, abort
 from celery import Celery
 from celery.result import AsyncResult
-from importlib import import_module
 import os
-import json
+import yaml
 import logging
 
 
@@ -53,17 +52,21 @@ def create_celery_app(app):
     return celery
 
 
-def create_scrapers():
-    scrapers_conf = json.loads(
-        open(os.environ.get('SCRAPERS_CONF_FILE')).read()
-    )
-    return {
-        conf.get('name'): getattr(
-            import_module('item_scrapers.scrapers.%s' % conf.get('name')),
-            'Scraper'
-        )(conf)
-        for conf in scrapers_conf
-    }
+def load_sources():
+    sources = {}
+    for root, _, files in os.walk(os.environ.get('SOURCES_DIRECTORY')):
+        for file in files:
+            name, ext = tuple(os.path.splitext(file))
+            if ext.lower() in ('.yml', '.yaml'):
+                path = os.path.join(root, file)
+                config = yaml.safe_load(open(path).read())
+                sources[name] = Source(name, config)
+
+    return sources
+
+
+def create_scraper():
+    return Scraper()
 
 
 def create_publisher():
@@ -86,7 +89,8 @@ def create_publisher():
 if os.environ.get('debug', False):
     logging.basicConfig(level=logging.DEBUG)
 
-scrapers = create_scrapers()
+sources = load_sources()
+scraper = create_scraper()
 publisher = create_publisher()
 
 app = application = create_flask_app()
@@ -94,15 +98,15 @@ celery = create_celery_app(app)
 
 
 @celery.task()
-def scrape_task(source):
-    scraper = scrapers.get(source)
-    return publisher.run(scraper)
+def scrape_task(source_name):
+    source = sources.get(source_name)
+    items = scraper.scrape(source)
+    publisher.publish(items)
 
 
 @app.route('/sources/<source>/scrape', methods=['POST'])
 def scrape(source):
-    scraper = scrapers.get(source)
-    if scraper is None:
+    if source not in sources:
         abort(400, 'Unknown source')
 
     result = scrape_task.delay(source)
