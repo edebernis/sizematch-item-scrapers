@@ -3,6 +3,7 @@ services:
   rabbitmq:
     image: "rabbitmq:3.8-management-alpine"
     ports:
+      - 5672:5672
       - 8080:15672
     restart: unless-stopped
     environment:
@@ -45,7 +46,7 @@ services:
       - RABBITMQ_PORT=5672
       - RABBITMQ_USERNAME=user
       - RABBITMQ_PASSWORD=password
-      - RABBITMQ_APP_ID=sizematch-item-scrapers
+      - RABBITMQ_APP_ID=sizematch-items-scrapers
       - PUBLISHER_EXCHANGE_NAME=sizematch-items
       - PUBLISHER_ROUTING_KEY_PREFIX=items.parse
       - PUBLISHER_QUEUE_NAME_PREFIX=sizematch-items-parser

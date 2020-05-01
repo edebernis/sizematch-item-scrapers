@@ -17,7 +17,7 @@ class Source:
         return self.config.get('langs')
 
     def get_brands(self):
-        return self.config.get('brands')
+        return self.config.get('brands', [None])
 
     def _get_url_regex(self, regex):
         return re.compile('(?P<url>{})(?:\\?|/|#)'.format(regex))

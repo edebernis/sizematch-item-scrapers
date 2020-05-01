@@ -3,7 +3,7 @@
 
 from item_scrapers import Source, Scraper, Publisher
 
-from flask import Flask, abort
+from flask import Flask, abort, request
 from celery import Celery
 from celery.result import AsyncResult
 import os
@@ -100,9 +100,9 @@ celery = create_celery_app(app)
 
 
 @celery.task()
-def scrape_task(source_name):
+def scrape_task(source_name, max_categories):
     source = sources.get(source_name)
-    items = scraper.scrape(source)
+    items = scraper.scrape(source, max_categories=max_categories)
     publisher.publish(source, items)
 
 
@@ -111,7 +111,14 @@ def scrape(source):
     if source not in sources:
         abort(400, 'Unknown source')
 
-    result = scrape_task.delay(source)
+    max_categories = None
+    if 'max_categories' in request.args:
+        try:
+            max_categories = int(request.args.get('max_categories'))
+        except ValueError:
+            abort(400, 'Max categories parameter must be an integer')
+
+    result = scrape_task.delay(source, max_categories)
     return {
         'task': {
             'id': result.id,

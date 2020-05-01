@@ -5,4 +5,4 @@ librabbitmq==2.0.0
 requests==2.21.0
 pika==1.1.0
 pyyaml==5.3.1
-git+https://${GITHUB_TOKEN}@github.com/edebernis/sizematch-protobuf.git@v0.0.12#egg=sizematch-protobuf&subdirectory=python
+git+https://${GITHUB_TOKEN}@github.com/edebernis/sizematch-protobuf.git@v0.0.13#egg=sizematch-protobuf&subdirectory=python

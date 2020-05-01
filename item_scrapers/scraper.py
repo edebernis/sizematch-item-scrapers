@@ -162,16 +162,20 @@ AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36'
             categories.update(new_categories)
             products.update(new_products)
 
-    def _walk(self, category, categories, products, source, lang, brand):
-        categories.add(category)
+    def _walk(self, category, categories, products, source, lang, brand,
+              max_categories):
+        if max_categories and len(categories) > max_categories:
+            return
 
+        categories.add(category)
         for cat in self._scrape_category(
           category, products, source, lang, brand
         ):
             if cat not in categories:
-                self._walk(cat, categories, products, source, lang, brand)
+                self._walk(cat, categories, products, source, lang, brand,
+                           max_categories)
 
-    def _get_all(self, source, lang, brand):
+    def _get_all(self, source, lang, brand, max_categories):
         categories = set()
         products = set()
         base_category = Category(
@@ -180,15 +184,19 @@ AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36'
             slug='base-category'
         )
 
-        self._walk(base_category, categories, products, source, lang, brand)
+        self._walk(base_category, categories, products, source, lang, brand,
+                   max_categories)
+        categories.discard(base_category)
+
         return categories, products
 
-    def scrape(self, source):
+    def scrape(self, source, max_categories=None):
         for lang, brand in itertools.product(
           source.get_langs(),
           source.get_brands()
         ):
-            categories, products = self._get_all(source, lang, brand)
+            categories, products = self._get_all(source, lang, brand,
+                                                 max_categories)
             logging.info("[Lang {}, Brand {}] {} categories, {} products"
                          .format(lang, brand, len(categories), len(products)))
 
