@@ -100,9 +100,13 @@ celery = create_celery_app(app)
 
 
 @celery.task()
-def scrape_task(source_name, max_categories):
+def scrape_task(source_name, max_categories, max_products_per_category):
     source = sources.get(source_name)
-    items = scraper.scrape(source, max_categories=max_categories)
+    items = scraper.scrape(
+        source,
+        max_categories=max_categories,
+        max_products_per_category=max_products_per_category
+    )
     publisher.publish(source, items)
 
 
@@ -116,9 +120,26 @@ def scrape(source):
         try:
             max_categories = int(request.args.get('max_categories'))
         except ValueError:
-            abort(400, 'Max categories parameter must be an integer')
+            abort(400, 'max_categories parameter must be an integer')
 
-    result = scrape_task.delay(source, max_categories)
+    max_products_per_category = None
+    if 'max_products_per_category' in request.args:
+        try:
+            max_products_per_category = int(
+                request.args.get('max_products_per_category')
+            )
+        except ValueError:
+            abort(
+                400,
+                'max_products_per_category parameter must be an integer'
+            )
+
+    result = scrape_task.delay(
+        source,
+        max_categories,
+        max_products_per_category
+    )
+
     return {
         'task': {
             'id': result.id,

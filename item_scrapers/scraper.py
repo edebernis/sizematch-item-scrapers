@@ -150,8 +150,11 @@ AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36'
             # Apply delay if any
             source.apply_delay()
 
-    def _scrape_category(self, category, products, source, lang, brand):
+    def _scrape_category(self, category, products, source, lang, brand,
+                         max_products_per_category):
         categories = set()
+        total_products = 0
+
         for new_categories, new_products in self._paginate(
             category, products, source, lang, brand
         ):
@@ -160,22 +163,33 @@ AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36'
                 return categories
 
             categories.update(new_categories)
-            products.update(new_products)
+
+            new_products = new_products.difference(products)
+            total_products += len(new_products)
+            if max_products_per_category and \
+               total_products > max_products_per_category:
+                for _ in range(total_products - max_products_per_category):
+                    new_products.pop()
+                products.update(new_products)
+                return categories
+            else:
+                products.update(new_products)
 
     def _walk(self, category, categories, products, source, lang, brand,
-              max_categories):
+              max_categories, max_products_per_category):
         if max_categories and len(categories) > max_categories:
             return
 
         categories.add(category)
         for cat in self._scrape_category(
-          category, products, source, lang, brand
+          category, products, source, lang, brand, max_products_per_category
         ):
             if cat not in categories:
                 self._walk(cat, categories, products, source, lang, brand,
-                           max_categories)
+                           max_categories, max_products_per_category)
 
-    def _get_all(self, source, lang, brand, max_categories):
+    def _get_all(self, source, lang, brand, max_categories,
+                 max_products_per_category):
         categories = set()
         products = set()
         base_category = Category(
@@ -185,18 +199,21 @@ AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36'
         )
 
         self._walk(base_category, categories, products, source, lang, brand,
-                   max_categories)
+                   max_categories, max_products_per_category)
         categories.discard(base_category)
 
         return categories, products
 
-    def scrape(self, source, max_categories=None):
+    def scrape(self, source, max_categories=None,
+               max_products_per_category=None):
         for lang, brand in itertools.product(
           source.get_langs(),
           source.get_brands()
         ):
-            categories, products = self._get_all(source, lang, brand,
-                                                 max_categories)
+            categories, products = self._get_all(
+                source, lang, brand,
+                max_categories, max_products_per_category
+            )
             logging.info("[Lang {}, Brand {}] {} categories, {} products"
                          .format(lang, brand, len(categories), len(products)))
 
